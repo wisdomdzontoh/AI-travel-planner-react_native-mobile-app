@@ -4,21 +4,53 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  ToastAndroid,
 } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigation, useRouter } from "expo-router";
 import { Colors } from "../../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../../configs/FirebaseConfig";
 
 export default function SingIn() {
   const navigation = useNavigation();
   const router = useRouter();
+
+  const [email, setEmail] = useState();
+  const [password, setPassword] = useState();
 
   useEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, []);
+
+  const onSignIn = () => {
+    if (!email || !password) {
+      ToastAndroid.show("Please enter Email and Password", ToastAndroid.LONG);
+      return;
+    }
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        console.log(user);
+        // ...
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // Handle Errors here, e.g., display a message to the user
+        console.log(errorMessage, errorCode);
+        if (errorCode == "auth/invalid-credential") {
+          ToastAndroid.show("Invalid Email or Password", ToastAndroid.LONG);
+        }
+
+        //ToastAndroid.show(errorMessage, ToastAndroid.LONG);
+      });
+  };
 
   return (
     <View
@@ -78,7 +110,11 @@ export default function SingIn() {
         >
           Email
         </Text>
-        <TextInput style={styles.input} placeholder="Enter email" />
+        <TextInput
+          style={styles.input}
+          onChangeText={(value) => setEmail(value)}
+          placeholder="Enter email"
+        />
       </View>
 
       {/*password */}
@@ -97,12 +133,14 @@ export default function SingIn() {
         <TextInput
           secureTextEntry={true}
           style={styles.input}
+          onChangeText={(value) => setPassword(value)}
           placeholder="Enter password"
         />
       </View>
 
       {/*sign in button*/}
-      <View
+      <TouchableOpacity
+        onPress={onSignIn}
         style={{
           padding: 20,
           backgroundColor: Colors.PRIMARY,
@@ -118,7 +156,7 @@ export default function SingIn() {
         >
           Sign In
         </Text>
-      </View>
+      </TouchableOpacity>
 
       {/*Sign up button*/}
       <TouchableOpacity
